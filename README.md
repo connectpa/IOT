@@ -1,25 +1,37 @@
 # IOT 
 This project is a fork of [Thingsboard v2.4.1](https://github.com/thingsboard/thingsboard/tree/v2.4.1).
 
-To setup and run this project, refer to the [Contribution Guide](https://thingsboard.io/docs/user-guide/contribution/how-to-contribute).
+To setup and run this project, refer to the [Contribution Guide](https://thingsboard.io/docs/user-guide/contribution/how-to-contribute) or to the `README.md` file in the `/docker` folder.
 
 ## TL;DR
 
-Commands to launch without consulting Contribution Guide:
+### Using local sources
+
+Commands to launch without consulting Contribution Guide, this method run the server and the client from local source:
 
 1. In the root directory launch `mvn clean install -DskipTests`.
-
-2. Once Maven has finished doing its stuffs, go to `./application/target/bin/install`, change file permission to file `install_dev_db.sh` by launching the command `chmod +x install_dev_db.sh` and execute it by `./install_dev_db.sh`. This file load the demo db with built-in users and devices.
-
-3. To start up server, run the main method of `ThingsboardServerApplication` class that is located in `application/src/main/java/org.thingsboard.server`.
-
+2. Once Maven has finished doing its stuffs, go to `/application/target/bin/install`, change file permission to file `install_dev_db.sh` by launching the command `chmod +x install_dev_db.sh` and execute it by `./install_dev_db.sh`. This file load the demo db with built-in users and devices.
+3. To start up server, run the main method of `ThingsboardServerApplication` class that is located in `/application/src/main/java/org.thingsboard.server`.
 4. To start up client, go to `/ui` directory and launch `mvn clean install -P npm-start`.
+5. Once the client has started, navigate to `localhost:3000` and authenticate with one of the provided credentials.
 
-5. Once the client has started, navigate to `localhost:3000` and authenticate with:
+### Using docker images
 
-   *login* `tenant@thingsboard.org`
+Commands to launch without reading the `README.md` file inside the `/docker` folder:
 
-   *password* `tenant`
+1. In the root directory launch `mvn clean install -DskipTests` (not sure if necessary).
+2. We will make use of the `docker-compose.yml` file to run separated containers for each service needed. As for now, we will use every image provided from Thingsboard for every service except the one for the UI, this one will be created ad used in the next steps.
+3. Launch the command `mvn clean install -Ddockerfile.skip=false` inside the `/msa/web-ui` folder. With this we create a docker image from the source code present in the `ui` directory.
+4. After the previous step has completed without error, make sure that the new image has been created by launching `docker image ls`, in the list outputted there should be an image named `psacr.azure.io/tb-web-ui`.
+5. Now that our image has been locally created, we can start the project with docker: navigate to the `/docker` directory and run `./dockr-install-tb.sh --loadDemo`, to create the postgres service with demo datas.
+6. Now everything is ready to startup all the services by running `./docker-start-services.sh`. (To stop all the services run `./docker-stop-services.sh`)
+7. Once all services are up, navigate to `localhost` and authenticate with one of the provided credentials.
+
+### Credentials
+
+- System administrator: `sysadmin@thingsboard.org` / `sysadmin`
+- Tenant administrator: `tenant@thingsboard.org` / `tenant`
+- Customer user: `custore@thingsboard.org` / `customer`
 
 **NOTE**
 
