@@ -18,7 +18,7 @@ version: '2.2'
 
 services:
   postgres:
-    restart: always
+#    restart: always
     image: "postgres:9.6"
     ports:
     - "5432"
