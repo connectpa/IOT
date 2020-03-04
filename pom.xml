@@ -50,7 +50,7 @@
         <commons-validator.version>1.6</commons-validator.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.9.9.3</jackson.version>
+        <jackson.version>2.9.10.3</jackson.version>
         <jackson-annotations.version>2.9.9</jackson-annotations.version>
         <jackson-core.version>2.9.9</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
