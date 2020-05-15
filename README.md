@@ -1,7 +1,7 @@
 # IOT 
-This project is a fork of [Thingsboard v2.4.1](https://github.com/thingsboard/thingsboard/tree/v2.4.1).
+This project is a fork of [Thingsboard v2.5](https://github.com/thingsboard/thingsboard/tree/v2.5).
 
-To setup and run this project, refer to the [Contribution Guide](https://thingsboard.io/docs/user-guide/contribution/how-to-contribute) or to the `README.md` file in the `/docker` folder.
+To setup and run this project, refer to the [Contribution Guide](https://thingsboard.io/docs/user-guide/contribution/how-to-contribute) or to the `README.md` file in the `/docker` folder (PREFERRED).
 
 ## TL;DR
 
@@ -15,7 +15,7 @@ Commands to launch without consulting Contribution Guide, this method run the se
 4. To start up client, go to `/ui` directory and launch `mvn clean install -P npm-start`.
 5. Once the client has started, navigate to `localhost:3000` and authenticate with one of the provided credentials.
 
-### Using docker images
+### Using docker images (PREFERRED)
 
 Commands to launch without reading the `README.md` file inside the `/docker` folder:
 
@@ -23,8 +23,8 @@ Commands to launch without reading the `README.md` file inside the `/docker` fol
 2. We will make use of the `docker-compose.yml` file to run separated containers for each service needed. As for now, we will use every image provided from Thingsboard for every service except the one for the UI, this one will be created ad used in the next steps.
 3. Launch the command `mvn clean install -Ddockerfile.skip=false` inside the `/msa/web-ui` folder. With this we create a docker image from the source code present in the `ui` directory.
 4. After the previous step has completed without error, make sure that the new image has been created by launching `docker image ls`, in the list outputted there should be an image named `psacr.azure.io/tb-web-ui`.
-5. Now that our image has been locally created, we can start the project with docker: navigate to the `/docker` directory and run `./dockr-install-tb.sh --loadDemo`, to create the postgres service with demo datas.
-6. Now everything is ready to startup all the services by running `./docker-start-services.sh`. (To stop all the services run `./docker-stop-services.sh`)
+5. Now that our image has been locally created, we can start the project with docker: navigate to the `/docker` directory and run `./docker-create-log-folders.sh` first, and then  `./docker-install-tb.sh --loadDemo`, to create the postgres service with demo data. This action has to be performed the first time and eventually when you want to return the application to a state of fresh new start. But in order to do that, first the folders `log` and `postgres` in `/docker/tb-node` have to be deleted.
+6. Now everything is ready to startup all the services by running `./docker-start-services.sh`. (To stop all the services run `./docker-stop-services.sh`, while `./docker-remove-services.sh` gets rid of volumes too)
 7. Once all services are up, navigate to `localhost` and authenticate with one of the provided credentials.
 
 ### Credentials
@@ -35,6 +35,6 @@ Commands to launch without reading the `README.md` file inside the `/docker` fol
 
 **NOTE**
 
-- currently this fork uses **HSQLDB**, so you won't need to setup any external database.
+- currently this fork uses **HSQLDB** when running the application using local sources, and **POSTGRES** when running docker, so you won't need to setup any external database.
 - on client startup it may give errors on `node-sass`: stop the execution and launch the command `npm rebuild node-sass`, then restart client.
 
