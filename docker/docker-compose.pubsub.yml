@@ -19,10 +19,10 @@ version: '2.2'
 services:
   tb-js-executor:
     env_file:
-      - queue-pubsub.env.env
+      - queue-pubsub.env
   tb-core1:
     env_file:
-      - queue-pubsub.env.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
@@ -49,21 +49,21 @@ services:
       - queue-pubsub.env
     depends_on:
       - zookeeper
-#  tb-mqtt-transport2:
-#    env_file:
-#      - queue-pubsub.env
-#    depends_on:
-#      - zookeeper
+  tb-mqtt-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
   tb-http-transport1:
     env_file:
       - queue-pubsub.env
     depends_on:
       - zookeeper
-#  tb-http-transport2:
-#    env_file:
-#      - queue-pubsub.env
-#    depends_on:
-#      - zookeeper
+  tb-http-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
   tb-coap-transport:
     env_file:
       - queue-pubsub.env

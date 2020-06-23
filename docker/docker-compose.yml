@@ -39,6 +39,7 @@ services:
       - tb-js-executor.env
   tb-core1:
 #    restart: always
+#    image: "psacr.azure.io/tb-node:latest"
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
@@ -50,6 +51,30 @@ services:
     environment:
       TB_SERVICE_ID: tb-core1
       TB_SERVICE_TYPE: tb-core
+      SECURITY_OAUTH2_ENABLED: "true"
+      SECURITY_OAUTH2_LOGINPROCESSINGURL: /login/oauth2/code/
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_LOGINBUTTONLABEL: Keycloak
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_LOGINBUTTONICON: mdi:key
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_CLIENTNAME: TB Keycloak
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_CLIENTID: thingsboard
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_CLIENTSECRET: thingsboard
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_ACCESSTOKENURI: http://keycloak:8080/auth/realms/thingsboard/protocol/openid-connect/token
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_SCOPE: openid,email,profile
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_REDIRECTURITEMPLATE: http://localhost/login/oauth2/code/
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_AUTHORIZATIONURI: http://keycloak:8080/auth/realms/thingsboard/protocol/openid-connect/auth
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_JWKSETURI: http://keycloak:8080/auth/realms/thingsboard/protocol/openid-connect/certs
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_AUTHORIZATIONGRANTTYPE: authorization_code
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_CLIENTAUTENTICATIONMETHOD: post
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_USERINFOURI: http://keycloak:8080/auth/realms/thingsboard/protocol/openid-connect/userinfo
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_USERNAMEATTRIBUTENAME: email
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_TYPE: basic
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_ALLOWCREATION: "true"
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_ACTIVATEUSER: "false"
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_BASIC_EMAILATTRIBUTEKEY: email
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_BASIC_FIRSTNAMEATTRIBUTEKEY: first_name
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_BASIC_LASTNAMEATTRIBUTEKEY: last_name
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_BASIC_TENANTNAMESTRATEGY: email
+      SECURITY_OAUTH2_CLIENTS_DEFAULT_MAPPERCONFIG_BASIC_ALWAYSFULLSCREEN: "false"
     env_file:
       - tb-node.env
     volumes:
@@ -61,32 +86,33 @@ services:
       - tb-js-executor
       - tb-rule-engine1
       - tb-rule-engine2
-  tb-core2:
-#    restart: always
-    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "8080"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200m"
-        max-file: "30"
-    environment:
-      TB_SERVICE_ID: tb-core2
-      TB_SERVICE_TYPE: tb-core
-    env_file:
-      - tb-node.env
-    volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
-    depends_on:
-      - zookeeper
-      - redis
-      - tb-js-executor
-      - tb-rule-engine1
-      - tb-rule-engine2
+#  tb-core2:
+##    restart: always
+#    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+#    ports:
+#      - "8080"
+#    logging:
+#      driver: "json-file"
+#      options:
+#        max-size: "200m"
+#        max-file: "30"
+#    environment:
+#      TB_SERVICE_ID: tb-core2
+#      TB_SERVICE_TYPE: tb-core
+#    env_file:
+#      - tb-node.env
+#    volumes:
+#      - ./tb-node/conf:/config
+#      - ./tb-node/log:/var/log/thingsboard
+#    depends_on:
+#      - zookeeper
+#      - redis
+#      - tb-js-executor
+#      - tb-rule-engine1
+#      - tb-rule-engine2
   tb-rule-engine1:
 #    restart: always
+#    image: "psacr.azure.io/tb-node:latest"
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
@@ -109,6 +135,7 @@ services:
       - tb-js-executor
   tb-rule-engine2:
 #    restart: always
+#    image: "psacr.azure.io/tb-node:latest"
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
@@ -201,7 +228,7 @@ services:
       - zookeeper
   tb-web-ui1:
 #    restart: always
-    image: "psacr.azure.io/tb-web-ui:latest"
+    image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
     env_file:
@@ -235,10 +262,23 @@ services:
       FORCE_HTTPS_REDIRECT: "false"
     links:
         - tb-core1
-        - tb-core2
+#        - tb-core2
         - tb-web-ui1
 #        - tb-web-ui2
         - tb-mqtt-transport1
 #        - tb-mqtt-transport2
         - tb-http-transport1
 #        - tb-http-transport2
+  keycloak:
+#    restart: always
+    # container_name: "${KEYCLOAK_NAME}"
+    image: quay.io/keycloak/keycloak:10.0.2
+    volumes:
+      - ./keycloak/thingsboard-realm.json:/tmp/thingsboard-realm.json
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /tmp/thingsboard-realm.json
+      DB_VENDOR: h2
