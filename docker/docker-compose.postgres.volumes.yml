@@ -23,9 +23,9 @@ services:
   tb-core1:
     volumes:
       - tb-log-volume:/var/log/thingsboard
-  tb-core2:
-    volumes:
-      - tb-log-volume:/var/log/thingsboard
+#  tb-core2:
+#    volumes:
+#      - tb-log-volume:/var/log/thingsboard
   tb-rule-engine1:
     volumes:
       - tb-log-volume:/var/log/thingsboard
@@ -38,15 +38,15 @@ services:
   tb-http-transport1:
     volumes:
       - tb-http-transport-log-volume:/var/log/tb-http-transport
-  tb-http-transport2:
-    volumes:
-      - tb-http-transport-log-volume:/var/log/tb-http-transport
+#  tb-http-transport2:
+#    volumes:
+#      - tb-http-transport-log-volume:/var/log/tb-http-transport
   tb-mqtt-transport1:
     volumes:
       - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
-  tb-mqtt-transport2:
-    volumes:
-      - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
+#  tb-mqtt-transport2:
+#    volumes:
+#      - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
 
 volumes:
   postgres-db-volume:
