@@ -4,41 +4,39 @@ This folder containing scripts and Kubernetes resources configurations to run Th
 
 ## Prerequisites
 
-ThingsBoard Microservices run on the Kubernetes cluster.
+ThingsBoard Microservices are running on Kubernetes cluster.
 You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster.
-If you do not have a cluster already, you can create one by using [Minikube](https://kubernetes.io/docs/setup/minikube), 
-or you can choose any other available [Kubernetes cluster deployment solutions](https://kubernetes.io/docs/setup/pick-right-solution/).
-
-### Enable ingress addon
-
-By default ingress addon is disabled in the Minikube, and available only in cluster providers.
-To enable ingress, please execute the following command:
-
-`
-$ minikube addons enable ingress
-` 
 
 ## Installation
 
-Before performing initial installation you can configure the type of database to be used with ThingsBoard and the type of deployment.
-To set database type change the value of `DATABASE` variable in `.env` file to one of the following:
+Before performing initial installation you have to select correct `PLATFORM` in `.env` file depending on the real cluster platform you are using (`minikube`, `openshift`, `gcp` or `aws`).
+
+Also, you can configure the type of database to be used with ThingsBoard and the type of deployment.
+In order to set database type change the value of `DATABASE` variable in `.env` file to one of the following:
 
 - `postgres` - use PostgreSQL database;
 - `hybrid` - use PostgreSQL for entities database and Cassandra for timeseries database;
 
-**NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml`, `cassandra.yml` for details).
+**NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `basic/postgres.yml` or `high-availability/postgres-ha.yaml` for postgres with replication, `common/cassandra.yml` for details).
 
-To set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
+If you selected `cassandra` as `DATABASE` you can also configure the number of Cassandra nodes (`StatefulSet.spec.replicas` property in `common/cassandra.yml` config file) and the `CASSANDRA_REPLICATION_FACTOR` in `.env` file. 
+It is recommended to have 5 Cassandra nodes with `CASSANDRA_REPLICATION_FACTOR` equal to 3.
 
-- `basic` - startup with a single instance of Zookeeper, Kafka and Redis;
-- `high-availability` - startup with Zookeeper, Kafka, and Redis in cluster modes;
+**NOTE**: If you want to configure `CASSANDRA_REPLICATION_FACTOR` please read Cassandra documentation first.  
 
-**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see the content of the directories `./basic` and `./high-availability` for details).
+In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
+
+- `basic` - start up with single instance of Zookeeper, Kafka and Redis;
+- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes;
+
+**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see the content of the directories `basic` and `high-availability` for details).
+
+Also, to run PostgreSQL in `high-availability` deployment mode you'll need to  [install](https://helm.sh/docs/intro/install/) `helm`.
 
 Execute the following command to run the installation:
 
 `
-$ ./k8s-install-tb.sh --loadDemo
+./k8s-install-tb.sh --loadDemo
 `
 
 Where:
@@ -50,19 +48,35 @@ Where:
 Execute the following command to deploy third-party resources:
 
 `
-$ ./k8s-deploy-thirdparty.sh
+./k8s-deploy-thirdparty.sh
 `
 
-Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't have configured Redis cluster.
+Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time or if you don't have configured Redis cluster.
 
+Before deploying ThingsBoard resources you can configure number of pods for each service in `common/thingsboard.yml` by changing `spec.replicas` fields for different services. 
+It is recommended to have at least 2 `tb-node` and 10 `tb-js-executor`.
 Execute the following command to deploy resources:
 
 `
-$ ./k8s-deploy-resources.sh
+./k8s-deploy-resources.sh
 `
 
-After a while when all resources will be successfully started you can open `http://{your-cluster-ip}` in your browser (for ex. `http://192.168.99.101`).
+If you have used minikube after a while when all resources will be successfully started you can open `http://{your-cluster-ip}` in your browser (for ex. `http://192.168.99.101`).
 You should see the ThingsBoard login page.
+
+If you have used aws or gcp installations you can open ThingsBoard web interface in your browser using dns name of the load balancer.
+
+You can see DNS name of the loadbalancer using command:
+
+`
+kubectl get ingress -oyaml
+`
+
+Or you can see this name on the ELB page.
+
+You should see the ThingsBoard login page.
+
+**NOTE**: If you're using OpenShift cluster you can view all Routes in Web GUI under Applications/Routes menu (main route by default starts with `tb-route-node-root-thingsboard`).
 
 Use the following default credentials:
 
@@ -79,13 +93,13 @@ For example to see ThingsBoard node logs execute the following commands:
 1) Get the list of the running tb-node pods:
 
 `
-$ kubectl get pods -l app=tb-node
+kubectl get pods -l app=tb-node
 `
 
 2) Fetch logs of the tb-node pod:
 
 `
-$ kubectl logs -f [tb-node-pod-name]
+kubectl logs -f [tb-node-pod-name]
 `
 
 Where:
@@ -100,19 +114,19 @@ See [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatshee
 Execute the following command to delete all ThingsBoard microservices:
 
 `
-$ ./k8s-delete-resources.sh
+./k8s-delete-resources.sh
 `
 
 Execute the following command to delete all third-party microservices:
 
 `
-$ ./k8s-delete-thirdparty.sh
+./k8s-delete-thirdparty.sh
 `
 
 Execute the following command to delete all resources (including database):
 
 `
-$ ./k8s-delete-all.sh
+./k8s-delete-all.sh
 `
 
 ## Upgrading
@@ -120,9 +134,9 @@ $ ./k8s-delete-all.sh
 In case when database upgrade is needed, execute the following commands:
 
 ```
-$ ./k8s-delete-resources.sh
-$ ./k8s-upgrade-tb.sh --fromVersion=[FROM_VERSION]
-$ ./k8s-deploy-resources.sh
+./k8s-delete-resources.sh
+./k8s-upgrade-tb.sh --fromVersion=[FROM_VERSION]
+./k8s-deploy-resources.sh
 ```
 
 Where:

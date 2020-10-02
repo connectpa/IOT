@@ -19,6 +19,8 @@ function installTb() {
 
     loadDemo=$1
 
+    kubectl apply -f $DEPLOYMENT_TYPE/$DATABASE/tb-node-db-configmap.yml
+
     kubectl apply -f common/tb-node-configmap.yml
     kubectl apply -f common/database-setup.yml &&
     kubectl wait --for=condition=Ready pod/tb-db-setup --timeout=120s &&
@@ -30,26 +32,45 @@ function installTb() {
 
 function installPostgres() {
 
-    kubectl apply -f common/postgres.yml
-    kubectl apply -f common/tb-node-postgres-configmap.yml
+    if [ "$DEPLOYMENT_TYPE" == "high-availability" ]; then
+        if [ "$PLATFORM" == "openshift" ]; then
+          export PG_UID=$(kubectl get project thingsboard -o jsonpath='{.metadata.annotations.openshift\.io\/sa\.scc\.uid-range}' | cut -d'/' -f 1)
+        else
+          export PG_UID=1001
+        fi
 
-    kubectl rollout status deployment/postgres
+        echo "Starting PostgreSQL as $PG_UID user."
+        kubectl apply -f $DEPLOYMENT_TYPE/pgpool-configmap.yml
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm install my-release -f $DEPLOYMENT_TYPE/postgres-ha.yaml \
+            --set pgpool.securityContext.runAsUser=$PG_UID --set pgpool.securityContext.fsGroup=$PG_UID \
+            --set metrics.securityContext.runAsUser=$PG_UID --set metrics.securityContext.fsGroup=$PG_UID \
+            --set postgresql.securityContext.runAsUser=$PG_UID --set postgresql.securityContext.fsGroup=$PG_UID \
+             bitnami/postgresql-ha
+        kubectl rollout status statefulset my-release-postgresql-ha-postgresql
+        kubectl rollout status deployment my-release-postgresql-ha-pgpool
+    else
+        kubectl apply -f $DEPLOYMENT_TYPE/postgres.yml
+        kubectl rollout status deployment/postgres
+    fi
 }
 
-function installHybrid() {
+function installCassandra() {
 
-    kubectl apply -f common/postgres.yml
+    if [ $CASSANDRA_REPLICATION_FACTOR -lt 1 ]; then
+        echo "CASSANDRA_REPLICATION_FACTOR should be greater or equal to 1. Value $CASSANDRA_REPLICATION_FACTOR is not allowed."
+        exit 1
+    fi
+
     kubectl apply -f common/cassandra.yml
-    kubectl apply -f common/tb-node-hybrid-configmap.yml
 
-    kubectl rollout status deployment/postgres
     kubectl rollout status statefulset/cassandra
 
-    kubectl exec -it cassandra-0 -- bash -c "cqlsh -e \
+    kubectl exec -it cassandra-0 -- bash -c "cqlsh -u cassandra -p cassandra -e \
                     \"CREATE KEYSPACE IF NOT EXISTS thingsboard \
                     WITH replication = { \
                         'class' : 'SimpleStrategy', \
-                        'replication_factor' : 1 \
+                        'replication_factor' : $CASSANDRA_REPLICATION_FACTOR \
                     };\""
 }
 
@@ -77,8 +98,12 @@ fi
 
 source .env
 
-kubectl apply -f common/tb-namespace.yml
+kubectl apply -f common/tb-namespace.yml || echo
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
+
+if [ "$PLATFORM" == "azure" ]; then
+  kubectl apply -f common/routes.yml
+fi
 
 case $DEPLOYMENT_TYPE in
         basic)
@@ -96,7 +121,8 @@ case $DATABASE in
             installTb ${loadDemo}
         ;;
         hybrid)
-            installHybrid
+            installPostgres
+            installCassandra
             installTb ${loadDemo}
         ;;
         *)
